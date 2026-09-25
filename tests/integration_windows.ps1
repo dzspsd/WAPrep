@@ -88,12 +88,22 @@ try {
     Verify-Python '3.11.1'
     Pass 'missing pip recovered under native PowerShell'
     if ($MachineConfiguration) {
+        # Preserve expandable registry values rather than baking their current
+        # expansion into PATH. These VMs are discarded after the CI job.
+        . $installer
+        $pathEntry = Get-EnvironmentEntry 'Path' 'Machine'
+        $pathEntry.Value = '%SystemRoot%\System32;' + $pathEntry.Value
+        $pathEntry.Kind = 'ExpandString'
+        $pathEntry.Existed = $true
+        Set-EnvironmentEntry $pathEntry
         foreach ($version in @('3.11.9','3.11.1','3.11.1')) {
             & $hostExe -NoLogo -NoProfile -ExecutionPolicy Bypass -File $installer -Version $version -NoElevate
             Assert-True ($LASTEXITCODE -eq 0) 'Machine installation failed'
             $machine = [Environment]::GetEnvironmentVariable('Path','Machine')
             Assert-True (($machine -split ';')[0] -like "*cpython-$version-*") 'Machine PATH does not prefer exact selected version'
             Assert-True (($machine -split ';')[1] -like '*\Scripts') 'Repeat run lost Scripts PATH entry'
+            $rawPath = Get-EnvironmentEntry 'Path' 'Machine'
+            Assert-True ($rawPath.Value.Contains('%SystemRoot%\System32') -and $rawPath.Kind -eq 'ExpandString') 'Raw PATH expansion/type was lost'
             $env:PATH = $machine + ';' + [Environment]::GetEnvironmentVariable('Path','User')
             $output = & $env:ComSpec /d /c 'python --version'
             Assert-True ($LASTEXITCODE -eq 0 -and $output -eq "Python $version") 'Fresh cmd default is wrong'
@@ -101,6 +111,21 @@ try {
             Assert-True ($LASTEXITCODE -eq 0 -and $output[-1] -ne $null -and ($output -join "`n").Contains($version)) 'Fresh PowerShell default is wrong'
         }
         Pass 'machine PATH, current-user profiles, fresh shells and downgrade/repeat install'
+
+        $selectedRoot = Join-Path ([Environment]::GetEnvironmentVariable('ProgramW6432')) 'PythonSelector'
+        $beforeSelection = [IO.File]::ReadAllBytes((Join-Path $selectedRoot 'selection.json'))
+        $beforeMachinePath = (Get-EnvironmentEntry 'Path' 'Machine').Value
+        $beforeUserPath = (Get-EnvironmentEntry 'Path' 'User').Value
+        $broken = Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'PowerShell\Microsoft.VSCode_profile.ps1'
+        [IO.File]::WriteAllText($broken,"# >>> PythonSelector >>>`r`nbroken`r`n")
+        $beforeBroken = [IO.File]::ReadAllBytes($broken)
+        & $hostExe -NoLogo -NoProfile -ExecutionPolicy Bypass -File $installer -Version '3.11.9' -NoElevate
+        Assert-True ($LASTEXITCODE -ne 0) 'Malformed profile should fail installation'
+        Assert-True ((Get-EnvironmentEntry 'Path' 'Machine').Value -ceq $beforeMachinePath) 'Machine PATH rollback failed'
+        Assert-True ((Get-EnvironmentEntry 'Path' 'User').Value -ceq $beforeUserPath) 'User PATH rollback failed'
+        Assert-True ([Convert]::ToBase64String([IO.File]::ReadAllBytes((Join-Path $selectedRoot 'selection.json'))) -eq [Convert]::ToBase64String($beforeSelection)) 'Selection rollback failed'
+        Assert-True ([Convert]::ToBase64String([IO.File]::ReadAllBytes($broken)) -eq [Convert]::ToBase64String($beforeBroken)) 'Profile rollback failed'
+        Pass 'native machine/user PATH and file rollback after partial configuration failure'
     }
     Write-Host "$script:checks native Windows integration checks passed."
 } finally {

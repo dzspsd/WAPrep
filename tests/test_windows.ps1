@@ -72,6 +72,7 @@ try {
             Assert-True (-not (Test-Path Alias:python)) 'Alias survived'
             Assert-True (-not (Test-Path Function:python3)) 'Function survived'
             Assert-True (-not $env:PYTHONHOME) 'PYTHONHOME survived'
+            Assert-True (-not (Test-Path Env:PYTHONHOME)) 'PYTHONHOME must be removed, not assigned an empty string'
             Assert-True (-not $env:VIRTUAL_ENV) 'Virtualenv survived'
             Assert-True ($env:PATH.StartsWith($bin + ';')) 'PATH not prepended'
             Assert-True (@($env:PATH -split ';' | Where-Object { $_ -ceq $bin }).Count -eq 1) 'Duplicate bin'
@@ -95,6 +96,7 @@ try {
         Assert-Throws {
             Invoke-CleanEnvironment {
                 Assert-True (-not $env:UV_OFFLINE) 'UV_OFFLINE leaked'
+                Assert-True (-not (Test-Path Env:UV_OFFLINE)) 'UV_OFFLINE must be removed, not assigned an empty string'
                 Assert-True (-not $env:UV_PYTHON_INSTALL_MIRROR) 'mirror leaked'
                 Assert-True (-not $env:PYTHONHOME) 'PYTHONHOME leaked'
                 throw 'synthetic failure'

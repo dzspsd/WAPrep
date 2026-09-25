@@ -52,7 +52,7 @@ foreach ($pythonSelectorName in @('python','python3','pip','pip3')) {
     Remove-Item "Function:$pythonSelectorName" -Force -ErrorAction SilentlyContinue
 }
 foreach ($pythonSelectorName in @('PYTHONHOME','PYTHONPATH','PYTHONSTARTUP','PYTHONUSERBASE','VIRTUAL_ENV','__PYVENV_LAUNCHER__')) {
-    [Environment]::SetEnvironmentVariable($pythonSelectorName,$null,'Process')
+    Remove-Item -LiteralPath "Env:$pythonSelectorName" -ErrorAction SilentlyContinue
 }
 '@ + "`r`n`$pythonSelectorBin = $literal`r`n" + @'
 $pythonSelectorScripts = Join-Path $pythonSelectorBin 'Scripts'
@@ -98,13 +98,13 @@ function Invoke-CleanEnvironment([scriptblock]$Body) {
     foreach ($item in @(Get-ChildItem Env:)) {
         if ($item.Name -match '^(UV_|PYTHON)' -or $item.Name -in @('VIRTUAL_ENV','CONDA_PREFIX','CONDA_DEFAULT_ENV','__PYVENV_LAUNCHER__')) {
             $saved[$item.Name] = $item.Value
-            [Environment]::SetEnvironmentVariable($item.Name,$null,'Process')
+            Remove-Item -LiteralPath "Env:$($item.Name)" -ErrorAction SilentlyContinue
         }
     }
     try { & $Body } finally {
         foreach ($item in @(Get-ChildItem Env:)) {
             if ($item.Name -match '^(UV_|PYTHON)' -or $item.Name -in @('VIRTUAL_ENV','CONDA_PREFIX','CONDA_DEFAULT_ENV','__PYVENV_LAUNCHER__')) {
-                [Environment]::SetEnvironmentVariable($item.Name,$null,'Process')
+                Remove-Item -LiteralPath "Env:$($item.Name)" -ErrorAction SilentlyContinue
             }
         }
         foreach ($key in $saved.Keys) { [Environment]::SetEnvironmentVariable($key,$saved[$key],'Process') }
