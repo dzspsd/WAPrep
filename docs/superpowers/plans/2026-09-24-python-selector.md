@@ -37,3 +37,8 @@
 
 - Design: confirmed default 3.11.1. Native script development and isolated tests are authorized by the request; no production defaults will be changed during development.
 - Research: pinned uv supports 3.11.1 on Intel/ARM macOS and x86/x64 Windows. Native Windows ARM64 availability must be checked per version.
+- Implementation: both standalone scripts, helper tests, real integration suites, recovery documentation and CI workflow are complete.
+- Review: corrected incomplete backup registration, unavailable damaged-interpreter discovery, legacy profile decoding, native PowerShell stderr handling, and cross-account UAC behavior.
+- Native CI finding: modern PowerShell needs explicit environment-variable removal; assigning a null string can leave an empty environment value. Added a failing regression test and fixed the removal operation.
+- Test harness findings: corrected GitHub Actions shell expression usage and Windows PowerShell 5.1 nested command quoting.
+- User-authorized scope extension: initialized this directory as a repository, created private `dzspsd/WAPrep`, and pushed the implementation and test workflow.

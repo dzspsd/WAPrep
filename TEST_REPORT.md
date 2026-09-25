@@ -14,6 +14,17 @@ Local testing did not change the real user's Python defaults, shell profiles, or
 
 ## Native CI
 
-The repository workflow runs the complete scripts on Intel and ARM macOS, Windows PowerShell 5.1, and Windows PowerShell 7. Results will be recorded after the initial repository push.
+**All four native jobs passed** in [GitHub Actions run 36096642695](https://github.com/dzspsd/WAPrep/actions/runs/36096642695), testing source revision [`8d2d763`](https://github.com/dzspsd/WAPrep/commit/8d2d763c132b3c6e5d01298e16c36019f9a46d92).
 
-Windows UAC's interactive approval UI, Windows ARM64/x86 hardware, enterprise policy, custom shells, and IDE interpreter-selection UI are not exercised by the local tests. GitHub's Windows runners run elevated, so CI can verify native machine configuration but not an interactive UAC prompt.
+| Environment | Helper tests | Real integration checks | Result |
+|---|---:|---:|---|
+| macOS 15, Apple Silicon (`macos-15`) | 9 | 17 | Passed |
+| macOS 15, Intel (`macos-15-intel`) | 9 | 17 | Passed |
+| Windows Server 2025 x64, Windows PowerShell 5.1 | 10 | 11 | Passed |
+| Windows Server 2025 x64, PowerShell 7 | 10 | 11 | Passed |
+
+Windows native checks execute actual downloaded Python binaries and fresh PowerShell/cmd sessions. They verify install/reuse, upgrade/downgrade, inherited configuration isolation, unavailable releases, locking, damaged-interpreter and missing-pip recovery, machine/user PATH precedence, preservation of raw expandable registry values, repeated installation, and rollback after a malformed profile interrupts configuration. The 94 named tests/check groups across the four jobs include additional assertions inside each group.
+
+CI found and drove a production regression fix for modern PowerShell leaving empty environment values when given a null string. It also exposed two test/workflow issues (dynamic `shell` expressions and PowerShell 5.1 command quoting), which were corrected before the final green run. The commit recording this report changes documentation only; installer and test code remain identical to the tested source revision.
+
+Windows UAC's interactive approval UI, Windows ARM64/x86 hardware, individual Windows 10/11 desktop images, enterprise policy, custom shells, and IDE interpreter-selection UI were not exercised. GitHub's Windows runners run elevated, so CI verifies native machine configuration but not an interactive UAC prompt. The macOS installer was exercised on physical Apple Silicon locally and on both GitHub-hosted Mac architectures.

@@ -24,8 +24,8 @@ Dot-source the installer to load recovery functions without running installation
 ```powershell
 . .\setup-python-windows.ps1
 $backup = 'C:\Program Files\PythonSelector\run.REPLACE_WITH_RUN_ID\backup'
-$files = @(Get-Content -LiteralPath (Join-Path $backup 'files.json') -Raw | ConvertFrom-Json)
-$environment = @(Get-Content -LiteralPath (Join-Path $backup 'environment.json') -Raw | ConvertFrom-Json)
+$files = @(Get-Content -LiteralPath (Join-Path $backup 'files.json') -Raw -Encoding UTF8 | ConvertFrom-Json)
+$environment = @(Get-Content -LiteralPath (Join-Path $backup 'environment.json') -Raw -Encoding UTF8 | ConvertFrom-Json)
 Restore-ConfigFiles $files
 foreach ($entry in $environment) { Set-EnvironmentEntry $entry }
 Send-EnvironmentNotification
