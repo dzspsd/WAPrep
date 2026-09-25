@@ -107,8 +107,8 @@ try {
             $env:PATH = $machine + ';' + [Environment]::GetEnvironmentVariable('Path','User')
             $output = & $env:ComSpec /d /c 'python --version'
             Assert-True ($LASTEXITCODE -eq 0 -and $output -eq "Python $version") 'Fresh cmd default is wrong'
-            $output = & $hostExe -NoLogo -ExecutionPolicy Bypass -Command 'python -c "import platform; print(platform.python_version())"'
-            Assert-True ($LASTEXITCODE -eq 0 -and $output[-1] -ne $null -and ($output -join "`n").Contains($version)) 'Fresh PowerShell default is wrong'
+            $output = & $hostExe -NoLogo -ExecutionPolicy Bypass -Command 'python --version'
+            Assert-True ($LASTEXITCODE -eq 0 -and @($output) -contains "Python $version") 'Fresh PowerShell default is wrong'
         }
         Pass 'machine PATH, current-user profiles, fresh shells and downgrade/repeat install'
 
