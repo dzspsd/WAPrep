@@ -1,0 +1,40 @@
+name: Test Python installers
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  macos:
+    name: macOS (${{ matrix.runner }})
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [macos-15, macos-15-intel]
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Syntax and behavioral tests
+        run: |
+          /bin/bash -n setup-python-mac.sh
+          python3 -m unittest discover -s tests -p 'test_*.py' -v
+      - name: Real install and configuration matrix
+        run: python3 tests/integration_mac.py
+  windows:
+    name: Windows (${{ matrix.shell }})
+    strategy:
+      fail-fast: false
+      matrix:
+        shell: [powershell, pwsh]
+    runs-on: windows-2025
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Behavioral tests
+        shell: ${{ matrix.shell }}
+        run: ./tests/test_windows.ps1
+      - name: Real installation and machine configuration
+        shell: ${{ matrix.shell }}
+        run: ./tests/integration_windows.ps1 -MachineConfiguration
