@@ -33,8 +33,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Behavioral tests
-        shell: ${{ matrix.shell }}
-        run: ./tests/test_windows.ps1
+        shell: pwsh
+        run: |
+          & '${{ matrix.shell }}' -NoLogo -NoProfile -ExecutionPolicy Bypass -File ./tests/test_windows.ps1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Real installation and machine configuration
-        shell: ${{ matrix.shell }}
-        run: ./tests/integration_windows.ps1 -MachineConfiguration
+        shell: pwsh
+        run: |
+          & '${{ matrix.shell }}' -NoLogo -NoProfile -ExecutionPolicy Bypass -File ./tests/integration_windows.ps1 -MachineConfiguration
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
